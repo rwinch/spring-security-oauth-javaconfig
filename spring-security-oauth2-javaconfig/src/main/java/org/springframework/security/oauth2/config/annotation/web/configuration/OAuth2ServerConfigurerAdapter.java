@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2ServerConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenGranter;
@@ -29,14 +30,17 @@ import org.springframework.security.oauth2.provider.endpoint.TokenEndpoint;
 import org.springframework.security.oauth2.provider.endpoint.WhitelabelApprovalEndpoint;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.ConsumerTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 
 /**
  * @author Rob Winch
+ * @author Dave Syer
  *
  */
 @Configuration
 public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigurerAdapter {
-    @Bean
+
+	@Bean
     public AuthorizationEndpoint authorizationEndpoint() throws Exception {
         AuthorizationEndpoint authorizationEndpoint = new AuthorizationEndpoint();
         authorizationEndpoint.setTokenGranter(tokenGranter());
@@ -78,10 +82,20 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
 
     @Bean
     public AuthorizationCodeTokenGranter authorizationTokenGranter() throws Exception {
-        return new AuthorizationCodeTokenGranter(tokenServices(), authorizationCodeServices(), clientDetails());
+        return new AuthorizationCodeTokenGranter(tokenServices(), authorizationCodeServices(), clientDetails(), oauth2RequestFactory());
     }
 
-    /**
+    @Bean
+    public OAuth2RequestFactory oauth2RequestFactory() throws Exception {
+		return oauthConfigurer().getOAuth2RequestFactory();
+	}
+
+    @Bean
+    public TokenStore tokenStore() throws Exception {
+		return oauthConfigurer().getTokenStore();
+	}
+
+	/**
      * @return
      * @throws Exception
      */

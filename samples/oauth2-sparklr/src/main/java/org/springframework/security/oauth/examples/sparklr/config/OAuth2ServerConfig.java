@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth.examples.sparklr.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -27,6 +28,10 @@ import org.springframework.security.oauth.examples.sparklr.oauth.SparklrUserAppr
 import org.springframework.security.oauth2.config.annotation.authentication.configurers.InMemoryClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.OAuth2ServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2ServerConfigurer;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 
 /**
  * @author Rob Winch
@@ -36,6 +41,9 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.OAu
 @Order(1)
 public class OAuth2ServerConfig extends OAuth2ServerConfigurerAdapter {
     private static final String SPARKLR_RESOURCE_ID = "sparklr";
+    
+    @Autowired
+	private TokenStore tokenStore;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth)
@@ -52,13 +60,21 @@ public class OAuth2ServerConfig extends OAuth2ServerConfigurerAdapter {
 
     @Bean
     @DependsOn("springSecurityFilterChain") // FIXME remove the need for @DependsOn
-    public SparklrUserApprovalHandler userApprovalHandler() throws Exception {
+    public SparklrUserApprovalHandler userApprovalHandler(OAuth2RequestFactory requestFactory) throws Exception {
         SparklrUserApprovalHandler handler = new SparklrUserApprovalHandler();
-        handler.setTokenServices(tokenServices());
+        handler.setApprovalStore(approvalStore());
+        handler.setRequestFactory(requestFactory);
         return handler;
     }
 
-    @Override
+    @Bean
+    public ApprovalStore approvalStore() {
+		TokenApprovalStore store = new TokenApprovalStore();
+		store.setTokenStore(tokenStore);
+		return store;
+	}
+
+	@Override
     public void configure(WebSecurity web) throws Exception {
         web
             .ignoring()

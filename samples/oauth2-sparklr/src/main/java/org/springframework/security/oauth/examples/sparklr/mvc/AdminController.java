@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.ConsumerTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,19 +31,21 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class AdminController {
 
 	private ConsumerTokenServices tokenServices;
+	
+	private TokenStore tokenStore;
 
 	private SparklrUserApprovalHandler userApprovalHandler;
 
 	@RequestMapping("/oauth/cache_approvals")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void startCaching() throws Exception {
-		userApprovalHandler.setUseTokenServices(true);
+		userApprovalHandler.setUseApprovalStore(true);
 	}
 
 	@RequestMapping("/oauth/uncache_approvals")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void stopCaching() throws Exception {
-		userApprovalHandler.setUseTokenServices(false);
+		userApprovalHandler.setUseApprovalStore(false);
 	}
 
 	@RequestMapping("/oauth/users/{user}/tokens")
@@ -50,7 +53,7 @@ public class AdminController {
 	public Collection<OAuth2AccessToken> listTokensForUser(@PathVariable String user, Principal principal)
 			throws Exception {
 		checkResourceOwner(user, principal);
-		return enhance(tokenServices.findTokensByUserName(user));
+		return enhance(tokenStore.findTokensByUserName(user));
 	}
 
 	@RequestMapping(value = "/oauth/users/{user}/tokens/{token}", method = RequestMethod.DELETE)
@@ -67,14 +70,14 @@ public class AdminController {
 	@RequestMapping("/oauth/clients/{client}/tokens")
 	@ResponseBody
 	public Collection<OAuth2AccessToken> listTokensForClient(@PathVariable String client) throws Exception {
-		return enhance(tokenServices.findTokensByClientId(client));
+		return enhance(tokenStore.findTokensByClientId(client));
 	}
 
 	private Collection<OAuth2AccessToken> enhance(Collection<OAuth2AccessToken> tokens) {
 		Collection<OAuth2AccessToken> result = new ArrayList<OAuth2AccessToken>();
 		for (OAuth2AccessToken prototype : tokens) {
 			DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(prototype);
-			String clientId = tokenServices.getClientId(token.getValue());
+			String clientId = tokenStore.readAuthentication(token).getOAuth2Request().getClientId();
 			if (clientId != null) {
 				Map<String, Object> map = new HashMap<String, Object>(token.getAdditionalInformation());
 				map.put("client_id", clientId);

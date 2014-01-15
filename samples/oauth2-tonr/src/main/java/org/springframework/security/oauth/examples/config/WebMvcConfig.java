@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
@@ -20,8 +19,8 @@ import org.springframework.security.oauth.examples.tonr.converter.AccessTokenReq
 import org.springframework.security.oauth.examples.tonr.impl.SparklrServiceImpl;
 import org.springframework.security.oauth.examples.tonr.mvc.FacebookController;
 import org.springframework.security.oauth.examples.tonr.mvc.SparklrController;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.web.accept.ContentNegotiationManagerFactoryBean;
+import org.springframework.web.client.RestOperations;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
@@ -34,10 +33,9 @@ import org.springframework.web.servlet.view.json.MappingJacksonJsonView;
 
 @Configuration
 @EnableWebMvc
-@ImportResource("/WEB-INF/spring-servlet.xml")
-//@Import(SecurityConfig.class)
 public class WebMvcConfig extends WebMvcConfigurerAdapter {
-    @Bean
+
+	@Bean
     public PropertySourcesPlaceholderConfigurer myPropertySourcesPlaceholderConfigurer() {
         PropertySourcesPlaceholderConfigurer p = new PropertySourcesPlaceholderConfigurer();
         p.setLocation(new ClassPathResource("sparklr.properties"));
@@ -76,7 +74,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
     }
 
     @Bean
-    public FacebookController facebookController(@Qualifier("facebookRestTemplate") OAuth2RestTemplate facebookRestTemplate) {
+    public FacebookController facebookController(@Qualifier("facebookRestTemplate") RestOperations facebookRestTemplate) {
         FacebookController controller = new FacebookController();
         controller.setFacebookRestTemplate(facebookRestTemplate);
         return controller;
@@ -86,8 +84,8 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
     public SparklrServiceImpl sparklrService(@Value("${sparklrPhotoListURL}") String sparklrPhotoListURL,
             @Value("${sparklrPhotoURLPattern}") String sparklrPhotoURLPattern,
             @Value("${sparklrTrustedMessageURL}") String sparklrTrustedMessageURL,
-            @Qualifier("sparklrRestTemplate") OAuth2RestTemplate sparklrRestTemplate,
-            @Qualifier("trustedClientRestTemplate") OAuth2RestTemplate trustedClientRestTemplate) {
+            @Qualifier("sparklrRestTemplate") RestOperations sparklrRestTemplate,
+            @Qualifier("trustedClientRestTemplate") RestOperations trustedClientRestTemplate) {
         SparklrServiceImpl sparklrService = new SparklrServiceImpl();
         sparklrService.setSparklrPhotoListURL(sparklrPhotoListURL);
         sparklrService.setSparklrPhotoURLPattern(sparklrPhotoURLPattern);

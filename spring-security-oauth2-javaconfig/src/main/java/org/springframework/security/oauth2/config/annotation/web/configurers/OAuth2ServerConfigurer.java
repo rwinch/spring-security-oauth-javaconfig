@@ -27,6 +27,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
+import org.springframework.security.oauth2.provider.DefaultOAuth2RequestFactory;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationProcessingFilter;
@@ -77,6 +79,7 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
     private ConsumerTokenServices consumerTokenServices;
     private String resourceId = "oauth2-resource";
     private SecurityExpressionHandler<FilterInvocation> expressionHandler = new OAuth2WebSecurityExpressionHandler();
+	private OAuth2RequestFactory requestFactory;
 
     private ClientDetailsService clientDetails() {
         return getBuilder().getSharedObject(ClientDetailsService.class);
@@ -84,6 +87,14 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
 
     public AuthorizationServerTokenServices getTokenServices() {
         return tokenServices;
+    }
+
+    public TokenStore getTokenStore() {
+        return tokenStore;
+    }
+
+    public OAuth2RequestFactory getOAuth2RequestFactory() {
+        return requestFactory;
     }
 
     public OAuth2ServerConfigurer tokenStore(TokenStore tokenStore) {
@@ -199,6 +210,14 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
     private AuthenticationManager authenticationManager(HttpSecurity http) {
         return http.getSharedObject(AuthenticationManager.class);
     }
+    
+    private OAuth2RequestFactory requestFactory(HttpSecurity http) {
+        if (requestFactory != null) {
+            return requestFactory;
+        }
+        requestFactory = new DefaultOAuth2RequestFactory(clientDetails());
+        return requestFactory;
+    }
 
     public TokenGranter getTokenGranter() {
         return tokenGranter;
@@ -224,18 +243,19 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
             AuthorizationServerTokenServices tokenServices = tokenServices(http);
             AuthorizationCodeServices authorizationCodeServices = authorizationCodeServices(http);
             AuthenticationManager authenticationManager = authenticationManager(http);
+            OAuth2RequestFactory requestFactory = requestFactory(http);
 
             List<TokenGranter> tokenGranters = new ArrayList<TokenGranter>();
             tokenGranters.add(new AuthorizationCodeTokenGranter(tokenServices,
-                    authorizationCodeServices, clientDetails));
+                    authorizationCodeServices, clientDetails, requestFactory));
             tokenGranters
-                    .add(new RefreshTokenGranter(tokenServices, clientDetails));
+                    .add(new RefreshTokenGranter(tokenServices, clientDetails, requestFactory));
             tokenGranters
-                    .add(new ImplicitTokenGranter(tokenServices, clientDetails));
+                    .add(new ImplicitTokenGranter(tokenServices, clientDetails, requestFactory));
             tokenGranters.add(new ClientCredentialsTokenGranter(tokenServices,
-                    clientDetails));
+                    clientDetails, requestFactory));
             tokenGranters.add(new ResourceOwnerPasswordTokenGranter(
-                    authenticationManager, tokenServices, clientDetails));
+                    authenticationManager, tokenServices, clientDetails, requestFactory));
             tokenGranter = new CompositeTokenGranter(tokenGranters);
         }
         return tokenGranter;
