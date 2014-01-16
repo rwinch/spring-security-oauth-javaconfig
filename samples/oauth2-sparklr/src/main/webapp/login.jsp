@@ -42,8 +42,12 @@
 			</p>
 
 			<p>
-				<input name="login" value="Login" type="submit"/>
+				<input name="login" value="Login" type="submit" />
 			</p>
+
+			<input type="hidden" name="${_csrf.parameterName}"
+				value="${_csrf.token}" />
+
 		</form>
 	</div>
 
