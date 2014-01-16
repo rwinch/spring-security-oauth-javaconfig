@@ -30,7 +30,6 @@ import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHand
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.expression.OAuth2WebSecurityExpressionHandler;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -39,6 +38,7 @@ import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.util.Assert;
 import org.springframework.web.accept.ContentNegotiationStrategy;
 import org.springframework.web.accept.HeaderContentNegotiationStrategy;
 
@@ -49,6 +49,7 @@ import org.springframework.web.accept.HeaderContentNegotiationStrategy;
  */
 public final class OAuth2ResourceServerConfigurer extends
 		SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
+
 	private AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
 
 	private AccessDeniedHandler accessDeniedHandler = new OAuth2AccessDeniedHandler();
@@ -72,6 +73,7 @@ public final class OAuth2ResourceServerConfigurer extends
 	}
 
 	public OAuth2ResourceServerConfigurer tokenStore(TokenStore tokenStore) {
+		Assert.state(tokenStore!=null, "TokenStore cannot be null");
 		this.tokenStore = tokenStore;
 		return this;
 	}
@@ -145,9 +147,7 @@ public final class OAuth2ResourceServerConfigurer extends
 	}
 
 	private TokenStore tokenStore() {
-		if (tokenStore == null) {
-			this.tokenStore = new InMemoryTokenStore();
-		}
+		Assert.state(tokenStore!=null, "TokenStore cannot be null");
 		return this.tokenStore;
 	}
 
