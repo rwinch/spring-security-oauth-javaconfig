@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.config.annotation.web.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2ServerConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenGranter;
@@ -38,7 +38,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
  *
  */
 @Configuration
-public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigurerAdapter {
+public abstract class OAuth2AuthorizationServerConfigurerAdapter extends WebSecurityConfigurerAdapter {
 
 	@Bean
     public AuthorizationEndpoint authorizationEndpoint() throws Exception {
@@ -51,7 +51,7 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
 
     @Bean
     public ConsumerTokenServices consumerTokenServices() throws Exception {
-        return oauthConfigurer().getConsumerTokenServices();
+        return authorizationServerConfigurer().getConsumerTokenServices();
     }
 
     @Bean
@@ -69,16 +69,16 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
 
     @Bean
     public OAuth2RequestFactory oauth2RequestFactory() throws Exception {
-		return oauthConfigurer().getOAuth2RequestFactory();
+		return authorizationServerConfigurer().getOAuth2RequestFactory();
 	}
 
     @Bean
     public TokenStore tokenStore() throws Exception {
-		return oauthConfigurer().getTokenStore();
+		return authorizationServerConfigurer().getTokenStore();
 	}
 
     protected AuthorizationServerTokenServices tokenServices() throws Exception {
-        return oauthConfigurer().getTokenServices();
+        return authorizationServerConfigurer().getTokenServices();
     }
 
     @Bean
@@ -97,15 +97,15 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
     }
 
     private AuthorizationCodeServices authorizationCodeServices() throws Exception {
-        return oauthConfigurer().getAuthorizationCodeServices();
+        return authorizationServerConfigurer().getAuthorizationCodeServices();
     }
 
     private TokenGranter tokenGranter() throws Exception {
-        return oauthConfigurer().getTokenGranter();
+        return authorizationServerConfigurer().getTokenGranter();
     }
 
-    private OAuth2ServerConfigurer oauthConfigurer() throws Exception {
-        return getHttp().getConfigurer(OAuth2ServerConfigurer.class);
+    private OAuth2AuthorizationServerConfigurer authorizationServerConfigurer() throws Exception {
+        return getHttp().getConfigurer(OAuth2AuthorizationServerConfigurer.class);
     }
 
     private ClientDetailsService clientDetails() throws Exception {

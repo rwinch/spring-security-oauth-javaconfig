@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.springframework.http.MediaType;
-import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,8 +29,6 @@ import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.TokenGranter;
-import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
-import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationProcessingFilter;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenGranter;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
@@ -39,7 +36,6 @@ import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenG
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
-import org.springframework.security.oauth2.provider.expression.OAuth2WebSecurityExpressionHandler;
 import org.springframework.security.oauth2.provider.implicit.ImplicitTokenGranter;
 import org.springframework.security.oauth2.provider.password.ResourceOwnerPasswordTokenGranter;
 import org.springframework.security.oauth2.provider.refresh.RefreshTokenGranter;
@@ -47,13 +43,10 @@ import org.springframework.security.oauth2.provider.token.AuthorizationServerTok
 import org.springframework.security.oauth2.provider.token.ConsumerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.InMemoryTokenStore;
-import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.DefaultSecurityFilterChain;
-import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -65,20 +58,16 @@ import org.springframework.web.accept.HeaderContentNegotiationStrategy;
  * @author Rob Winch
  * @since 3.2
  */
-public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
+public final class OAuth2AuthorizationServerConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
     private AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
     private AccessDeniedHandler accessDeniedHandler = new OAuth2AccessDeniedHandler();
 
     private ClientCredentialsTokenEndpointFilter clientCredentialsTokenEndpointFilter;
-    private OAuth2AuthenticationProcessingFilter resourcesServerFilter;
     private AuthorizationServerTokenServices tokenServices;
+    private ConsumerTokenServices consumerTokenServices;
     private AuthorizationCodeServices authorizationCodeServices;
-    private ResourceServerTokenServices resourceTokenServices;
     private TokenStore tokenStore;
     private TokenGranter tokenGranter;
-    private ConsumerTokenServices consumerTokenServices;
-    private String resourceId = "oauth2-resource";
-    private SecurityExpressionHandler<FilterInvocation> expressionHandler = new OAuth2WebSecurityExpressionHandler();
 	private OAuth2RequestFactory requestFactory;
 
     private ClientDetailsService clientDetails() {
@@ -97,7 +86,7 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
         return requestFactory;
     }
 
-    public OAuth2ServerConfigurer tokenStore(TokenStore tokenStore) {
+    public OAuth2AuthorizationServerConfigurer tokenStore(TokenStore tokenStore) {
         this.tokenStore = tokenStore;
         return this;
     }
@@ -128,11 +117,6 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
         exceptionHandling.defaultAuthenticationEntryPointFor(postProcess(authenticationEntryPoint), preferredMatcher);
     }
 
-    public OAuth2ServerConfigurer resourceId(String resourceId) {
-        this.resourceId = resourceId;
-        return this;
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public void configure(HttpSecurity http) throws Exception {
@@ -141,39 +125,31 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
         clientCredentialsTokenEndpointFilter.setAuthenticationManager(authenticationManager);
         clientCredentialsTokenEndpointFilter = postProcess(clientCredentialsTokenEndpointFilter);
 
-        AuthenticationManager oauthAuthenticationManager = oauthAuthenticationManager(http);
-        resourcesServerFilter = new OAuth2AuthenticationProcessingFilter();
-        resourcesServerFilter.setAuthenticationManager(oauthAuthenticationManager);
-        resourcesServerFilter = postProcess(resourcesServerFilter);
-
         this.tokenGranter = tokenGranter(http);
-        this.consumerTokenServices = consumerTokenServices(http);
+		this.consumerTokenServices = consumerTokenServices(http);
 
-
+        // @formatter:off
         http
-            .authorizeRequests()
-                .expressionHandler(expressionHandler)
-                .and()
-            .addFilterBefore(resourcesServerFilter, AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(clientCredentialsTokenEndpointFilter, BasicAuthenticationFilter.class)
             .getConfigurer(ExceptionHandlingConfigurer.class)
                 .accessDeniedHandler(accessDeniedHandler);
+        // @formatter:on
 
     }
 
-    private AuthenticationManager oauthAuthenticationManager(HttpSecurity http) {
-        OAuth2AuthenticationManager oauthAuthenticationManager = new OAuth2AuthenticationManager();
-        oauthAuthenticationManager.setResourceId(resourceId);
-        oauthAuthenticationManager
-                .setTokenServices(resourceTokenServices(http));
-        return oauthAuthenticationManager;
-    }
+	public ConsumerTokenServices getConsumerTokenServices() {
+		return consumerTokenServices;
+	}
 
-    private ResourceServerTokenServices resourceTokenServices(
-            HttpSecurity http) {
-        tokenServices(http);
-        return this.resourceTokenServices;
-    }
+	private ConsumerTokenServices consumerTokenServices(HttpSecurity http) {
+		if (consumerTokenServices == null) {
+			DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+			defaultTokenServices.setClientDetailsService(clientDetails());
+			defaultTokenServices.setTokenStore(tokenStore());
+			consumerTokenServices = defaultTokenServices;
+		}
+		return consumerTokenServices;
+	}
 
     private AuthorizationServerTokenServices tokenServices(HttpSecurity http) {
         if (tokenServices != null) {
@@ -184,7 +160,6 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
         tokenServices.setSupportRefreshToken(true);
         tokenServices.setClientDetailsService(clientDetails());
         this.tokenServices = tokenServices;
-        this.resourceTokenServices = tokenServices;
         return tokenServices;
     }
 
@@ -221,20 +196,6 @@ public final class OAuth2ServerConfigurer extends SecurityConfigurerAdapter<Defa
 
     public TokenGranter getTokenGranter() {
         return tokenGranter;
-    }
-
-    public ConsumerTokenServices getConsumerTokenServices() {
-        return consumerTokenServices;
-    }
-
-    private ConsumerTokenServices consumerTokenServices(HttpSecurity http) {
-        if(consumerTokenServices == null) {
-            DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
-            defaultTokenServices.setClientDetailsService(clientDetails());
-            defaultTokenServices.setTokenStore(tokenStore());
-            consumerTokenServices = defaultTokenServices;
-        }
-        return consumerTokenServices;
     }
 
     private TokenGranter tokenGranter(HttpSecurity http) throws Exception {
