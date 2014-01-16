@@ -54,24 +54,6 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
         return oauthConfigurer().getConsumerTokenServices();
     }
 
-    /**
-     * @return
-     */
-    private AuthorizationCodeServices authorizationCodeServices() throws Exception {
-        return oauthConfigurer().getAuthorizationCodeServices();
-    }
-
-    /**
-     * @return
-     */
-    private TokenGranter tokenGranter() throws Exception {
-        return oauthConfigurer().getTokenGranter();
-    }
-
-    private OAuth2ServerConfigurer oauthConfigurer() throws Exception {
-        return getHttp().getConfigurer(OAuth2ServerConfigurer.class);
-    }
-
     @Bean
     public TokenEndpoint tokenEndpoint() throws Exception {
         TokenEndpoint tokenEndpoint = new TokenEndpoint();
@@ -95,17 +77,13 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
 		return oauthConfigurer().getTokenStore();
 	}
 
-	/**
-     * @return
-     * @throws Exception
-     */
     protected AuthorizationServerTokenServices tokenServices() throws Exception {
         return oauthConfigurer().getTokenServices();
     }
 
     @Bean
     public WhitelabelApprovalEndpoint approvalEndpoint() {
-        return new WhitelabelApprovalEndpoint ();
+        return new WhitelabelApprovalEndpoint();
     }
 
     @Bean
@@ -116,6 +94,18 @@ public abstract class OAuth2ServerConfigurerAdapter extends WebSecurityConfigure
     @Bean
     public ClientDetailsService clientDetailsServiceBean() throws Exception {
         return clientDetails();
+    }
+
+    private AuthorizationCodeServices authorizationCodeServices() throws Exception {
+        return oauthConfigurer().getAuthorizationCodeServices();
+    }
+
+    private TokenGranter tokenGranter() throws Exception {
+        return oauthConfigurer().getTokenGranter();
+    }
+
+    private OAuth2ServerConfigurer oauthConfigurer() throws Exception {
+        return getHttp().getConfigurer(OAuth2ServerConfigurer.class);
     }
 
     private ClientDetailsService clientDetails() throws Exception {

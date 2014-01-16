@@ -35,54 +35,55 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 
 /**
  * @author Rob Winch
- *
+ * 
  */
 @Configuration
 @Order(1)
 public class OAuth2ServerConfig extends OAuth2ServerConfigurerAdapter {
-    private static final String SPARKLR_RESOURCE_ID = "sparklr";
-    
-    @Autowired
+	private static final String SPARKLR_RESOURCE_ID = "sparklr";
+
+	@Autowired
 	private TokenStore tokenStore;
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth)
-            throws Exception {
-        auth
-            .apply(new InMemoryClientDetailsServiceConfigurer())
-                .withClient("tonr")
-                    .resourceIds(SPARKLR_RESOURCE_ID)
-                    .authorizedGrantTypes("authorization_code","implicit")
-                    .authorities("ROLE_CLIENT")
-                    .scopes("read","write")
-                    .secret("secret");
-    }
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		
+		// @formatter:off
+		 	auth.apply(new InMemoryClientDetailsServiceConfigurer())
+		 		.withClient("tonr")
+		 			.resourceIds(SPARKLR_RESOURCE_ID)
+		 			.authorizedGrantTypes("authorization_code", "implicit")
+		 			.authorities("ROLE_CLIENT")
+		 			.scopes("read", "write")
+		 			.secret("secret");
+		// @formatter:on
+	}
 
-    @Bean
-    @DependsOn("springSecurityFilterChain") // FIXME remove the need for @DependsOn
-    public SparklrUserApprovalHandler userApprovalHandler(OAuth2RequestFactory requestFactory) throws Exception {
-        SparklrUserApprovalHandler handler = new SparklrUserApprovalHandler();
-        handler.setApprovalStore(approvalStore());
-        handler.setRequestFactory(requestFactory);
-        return handler;
-    }
+	@Bean
+	@DependsOn("springSecurityFilterChain")
+	// FIXME remove the need for @DependsOn
+	public SparklrUserApprovalHandler userApprovalHandler(OAuth2RequestFactory requestFactory) throws Exception {
+		SparklrUserApprovalHandler handler = new SparklrUserApprovalHandler();
+		handler.setApprovalStore(approvalStore());
+		handler.setRequestFactory(requestFactory);
+		return handler;
+	}
 
-    @Bean
-    public ApprovalStore approvalStore() {
+	@Bean
+	public ApprovalStore approvalStore() {
 		TokenApprovalStore store = new TokenApprovalStore();
 		store.setTokenStore(tokenStore);
 		return store;
 	}
 
 	@Override
-    public void configure(WebSecurity web) throws Exception {
-        web
-            .ignoring()
-                .antMatchers("/resources/**");
-    }
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring().antMatchers("/**/*.css");
+	}
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		// @formatter:off
         http
             .authorizeRequests()
                 .antMatchers("/oauth/token").fullyAuthenticated()
@@ -104,5 +105,6 @@ public class OAuth2ServerConfig extends OAuth2ServerConfigurerAdapter {
                 .and()
             .apply(new OAuth2ServerConfigurer())
                 .resourceId(SPARKLR_RESOURCE_ID);
-    }
+    	// @formatter:on
+	}
 }

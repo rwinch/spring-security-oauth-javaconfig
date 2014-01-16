@@ -12,26 +12,23 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth)
-            throws Exception {
-        auth
-            .inMemoryAuthentication()
-                .withUser("marissa").password("koala").roles("USER").and()
-                .withUser("paul").password("emu").roles("USER");
-    }
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.inMemoryAuthentication().withUser("marissa").password("koala").roles("USER").and().withUser("paul")
+				.password("emu").roles("USER");
+	}
 
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
+	@Override
+	@Bean
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
+	}
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		// @formatter:off
+    	         http
             .authorizeRequests()
-                .antMatchers("/**/*.css").permitAll()
                 .antMatchers("/login.jsp").permitAll()
                 .anyRequest().hasRole("USER")
                 .and()
@@ -49,5 +46,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .failureUrl("/login.jsp?authentication_error=true")
                     .loginPage("/login.jsp")
                     .loginProcessingUrl("/login.do");
-    }
+    	// @formatter:on
+	}
 }

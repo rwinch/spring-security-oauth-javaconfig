@@ -37,16 +37,20 @@
 			<form action="<c:url value="/login.do"/>" method="post">
 				<p>
 					<label>Username: <input type='text' name='j_username'
-						value="marissa"/></label>
+						value="marissa" /></label>
 				</p>
 				<p>
 					<label>Password: <input type='text' name='j_password'
-						value="wombat"/></label>
+						value="wombat" /></label>
 				</p>
 
 				<p>
-					<input name="login" value="Login" type="submit"/>
+					<input name="login" value="Login" type="submit" />
 				</p>
+
+				<input type="hidden" name="${_csrf.parameterName}"
+					value="${_csrf.token}" />
+
 			</form>
 
 			<p class="footer">
