@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.OAu
 import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.token.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
 /**
@@ -44,7 +45,7 @@ public class OAuth2ServerConfig extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
 	private TokenStore tokenStore;
-
+	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
@@ -66,6 +67,8 @@ public class OAuth2ServerConfig extends WebSecurityConfigurerAdapter {
 	@Configuration
 	@Order(1)
 	protected static class AuthorizationServerConfiguration extends OAuth2AuthorizationServerConfigurerAdapter {
+		
+		private TokenStore tokenStore = new InMemoryTokenStore();
 		
 		@Override
 		protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -92,7 +95,7 @@ public class OAuth2ServerConfig extends WebSecurityConfigurerAdapter {
 		@Bean
 		public ApprovalStore approvalStore() throws Exception {
 			TokenApprovalStore store = new TokenApprovalStore();
-			store.setTokenStore(tokenStore());
+			store.setTokenStore(tokenStore);
 			return store;
 		}
 
@@ -114,7 +117,7 @@ public class OAuth2ServerConfig extends WebSecurityConfigurerAdapter {
 	            .requestMatchers()
                     .antMatchers("/oauth/token")
                     .and()
-	            .apply(new OAuth2AuthorizationServerConfigurer());
+	            .apply(new OAuth2AuthorizationServerConfigurer()).tokenStore(tokenStore);
 	    	// @formatter:on
 		}
 
