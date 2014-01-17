@@ -13,7 +13,7 @@ ext.slf4jVersion = '1.6.3'
 ext.jettyVersion = '7.1.6.v20100715'
 ext.springVersion = "3.2.3.RELEASE"
 ext.springSecurityVersion = '3.2.0.CI-SNAPSHOT'
-ext.springOauthVersion = "1.0.4.RELEASE"
+ext.springOauthVersion = "2.0.0.BUILD-SNAPSHOT"
 ext.apacheDsVersion = '1.5.5'
 ext.groovyVersion = "2.0.6"
 
