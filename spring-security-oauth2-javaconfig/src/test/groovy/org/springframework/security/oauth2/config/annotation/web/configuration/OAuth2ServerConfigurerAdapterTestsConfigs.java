@@ -20,7 +20,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.config.annotation.authentication.configurers.InMemoryClientDetailsServiceConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2ServerConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2ResourceServerConfigurer;
 
 /**
  * @author Rob Winch
@@ -29,7 +30,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.OAu
 public class OAuth2ServerConfigurerAdapterTestsConfigs {
     @Configuration
     @EnableWebSecurity
-    static class InMemoryClientDetailsConfig extends OAuth2ServerConfigurerAdapter {
+    static class InMemoryClientDetailsConfig extends OAuth2AuthorizationServerConfigurerAdapter {
         static String APP_NAME = "app";
 
         @Override
@@ -51,14 +52,15 @@ public class OAuth2ServerConfigurerAdapterTestsConfigs {
                 .authorizeRequests()
                     .anyRequest().hasRole("USER")
                     .and()
-                .apply(new OAuth2ServerConfigurer())
-                    .resourceId(APP_NAME);
+                .apply(new OAuth2AuthorizationServerConfigurer()).and()
+                .apply(new OAuth2ResourceServerConfigurer())
+                        .resourceId(APP_NAME);
         }
     }
 
     @Configuration
     @EnableWebSecurity
-    static class OAuth2ServerConfigurerDefaultsConfig extends OAuth2ServerConfigurerAdapter {
+    static class OAuth2ServerConfigurerDefaultsConfig extends OAuth2AuthorizationServerConfigurerAdapter {
         static String APP_NAME = "app";
 
         @Override
@@ -80,7 +82,8 @@ public class OAuth2ServerConfigurerAdapterTestsConfigs {
                 .authorizeRequests()
                     .anyRequest().hasRole("USER")
                     .and()
-                .apply(new OAuth2ServerConfigurer())
+                .apply(new OAuth2AuthorizationServerConfigurer()).and()
+                .apply(new OAuth2ResourceServerConfigurer())
                     .resourceId(APP_NAME);
         }
     }
