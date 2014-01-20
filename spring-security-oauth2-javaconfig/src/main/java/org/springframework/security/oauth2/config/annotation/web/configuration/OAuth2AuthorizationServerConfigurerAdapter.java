@@ -17,6 +17,9 @@ package org.springframework.security.oauth2.config.annotation.web.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -40,42 +43,52 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 @Configuration
 public abstract class OAuth2AuthorizationServerConfigurerAdapter extends WebSecurityConfigurerAdapter {
 
-	@Bean
+    @Bean
     public AuthorizationEndpoint authorizationEndpoint() throws Exception {
         AuthorizationEndpoint authorizationEndpoint = new AuthorizationEndpoint();
         authorizationEndpoint.setTokenGranter(tokenGranter());
-        authorizationEndpoint.setClientDetailsService(clientDetails());
+        authorizationEndpoint.setClientDetailsService(clientDetailsService());
         authorizationEndpoint.setAuthorizationCodeServices(authorizationCodeServices());
         return authorizationEndpoint;
     }
 
     @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
     public ConsumerTokenServices consumerTokenServices() throws Exception {
         return authorizationServerConfigurer().getConsumerTokenServices();
     }
 
     @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
     public TokenEndpoint tokenEndpoint() throws Exception {
         TokenEndpoint tokenEndpoint = new TokenEndpoint();
-        tokenEndpoint.setClientDetailsService(clientDetails());
+        tokenEndpoint.setClientDetailsService(clientDetailsService());
         tokenEndpoint.setTokenGranter(tokenGranter());
         return tokenEndpoint;
     }
 
     @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
     public AuthorizationCodeTokenGranter authorizationTokenGranter() throws Exception {
-        return new AuthorizationCodeTokenGranter(tokenServices(), authorizationCodeServices(), clientDetails(), oauth2RequestFactory());
+        return new AuthorizationCodeTokenGranter(tokenServices(), authorizationCodeServices(), clientDetailsService(), oauth2RequestFactory());
     }
 
     @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
     public OAuth2RequestFactory oauth2RequestFactory() throws Exception {
-		return authorizationServerConfigurer().getOAuth2RequestFactory();
-	}
+        return authorizationServerConfigurer().getOAuth2RequestFactory();
+    }
 
     @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
     public TokenStore tokenStore() throws Exception {
-		return authorizationServerConfigurer().getTokenStore();
-	}
+        return authorizationServerConfigurer().getTokenStore();
+    }
 
     protected AuthorizationServerTokenServices tokenServices() throws Exception {
         return authorizationServerConfigurer().getTokenServices();
@@ -92,23 +105,27 @@ public abstract class OAuth2AuthorizationServerConfigurerAdapter extends WebSecu
     }
 
     @Bean
-    public ClientDetailsService clientDetailsServiceBean() throws Exception {
-        return clientDetails();
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
+    public ClientDetailsService clientDetailsService() throws Exception {
+        return getHttp().getSharedObject(ClientDetailsService.class);
     }
 
-    private AuthorizationCodeServices authorizationCodeServices() throws Exception {
+    @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
+    public AuthorizationCodeServices authorizationCodeServices() throws Exception {
         return authorizationServerConfigurer().getAuthorizationCodeServices();
     }
 
-    private TokenGranter tokenGranter() throws Exception {
+    @Bean
+    @Lazy
+    @Scope(proxyMode=ScopedProxyMode.INTERFACES)
+    public TokenGranter tokenGranter() throws Exception {
         return authorizationServerConfigurer().getTokenGranter();
     }
 
     private OAuth2AuthorizationServerConfigurer authorizationServerConfigurer() throws Exception {
         return getHttp().getConfigurer(OAuth2AuthorizationServerConfigurer.class);
-    }
-
-    private ClientDetailsService clientDetails() throws Exception {
-        return getHttp().getSharedObject(ClientDetailsService.class);
     }
 }
